@@ -1,26 +1,56 @@
 import React, { useState } from 'react';
-import { Lock, Mail, Eye, EyeOff } from 'lucide-react';
+import { Lock, User, Eye, EyeOff, Loader2 } from 'lucide-react';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
 
 const Login = ({ onLoginSuccess }) => {
-    const [email, setEmail] = useState('');
+    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
 
-        if (!email || !password) {
+        if (!username || !password) {
             setError('Please fill in all fields.');
             return;
         }
 
-        // Default administrative access credentials
-        if (email === 'admin@dev.com' && password === 'admin123') {
-            onLoginSuccess();
-        } else {
-            setError('Invalid email or password credentials.');
+        setLoading(true);
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username, password }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.status === 'success') {
+                // Store auth token and user data in localStorage
+                localStorage.setItem('auth_token', data.auth_token);
+                localStorage.setItem('user', JSON.stringify({
+                    user_id: data.user_id,
+                    username: data.username,
+                    name: data.name,
+                    email: data.email,
+                    role_id: data.role_id,
+                    branch_id: data.branch_id,
+                }));
+                onLoginSuccess();
+            } else {
+                setError(data.message || 'Invalid username or password.');
+            }
+        } catch (err) {
+            setError('Unable to connect to the server. Please try again later.');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -41,17 +71,18 @@ const Login = ({ onLoginSuccess }) => {
 
                 <form onSubmit={handleSubmit} className="space-y-5">
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Email Address</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Username</label>
                         <div className="relative">
                             <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
-                                <Mail size={18} />
+                                <User size={18} />
                             </span>
                             <input
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+                                type="text"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
                                 className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
-                                placeholder="admin@dev.com"
+                                placeholder="Enter your username"
+                                disabled={loading}
                             />
                         </div>
                     </div>
@@ -68,6 +99,7 @@ const Login = ({ onLoginSuccess }) => {
                                 onChange={(e) => setPassword(e.target.value)}
                                 className="w-full pl-10 pr-10 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                                 placeholder="••••••••"
+                                disabled={loading}
                             />
                             <button
                                 type="button"
@@ -89,9 +121,17 @@ const Login = ({ onLoginSuccess }) => {
 
                     <button
                         type="submit"
-                        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                        disabled={loading}
+                        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
-                        Sign In
+                        {loading ? (
+                            <>
+                                <Loader2 size={18} className="animate-spin" />
+                                Signing In...
+                            </>
+                        ) : (
+                            'Sign In'
+                        )}
                     </button>
                 </form>
             </div>
