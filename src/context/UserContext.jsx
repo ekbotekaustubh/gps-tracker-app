@@ -38,13 +38,7 @@ export const CITIES = [
   { id: 333, name: 'New Delhi', state_id: 32, country_id: 1 },
 ];
 
-export const BRANCHES = [
-  { id: 0, name: 'System / None' },
-  { id: 1, name: 'Head Office (Mumbai)' },
-  { id: 2, name: 'Bengaluru Branch' },
-  { id: 3, name: 'Pune Branch' },
-  { id: 4, name: 'Delhi Branch' },
-];
+
 
 export const UserProvider = ({ children }) => {
   const [users, setUsers] = useState([

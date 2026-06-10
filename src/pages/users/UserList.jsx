@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useUsers, ROLES, BRANCHES } from '../../context/UserContext';
+import { useUsers, ROLES } from '../../context/UserContext';
+import { useBranches } from '../../context/BranchContext';
 import { Search, UserPlus, Edit, Trash2, Shield, MapPin, AlertTriangle } from 'lucide-react';
 
 const UserList = () => {
   const { users, deleteUser } = useUsers();
+  const { branches } = useBranches();
   const [searchTerm, setSearchTerm] = useState('');
   const [userToDelete, setUserToDelete] = useState(null);
 
@@ -13,7 +15,7 @@ const UserList = () => {
   };
 
   const getBranchName = (branchId) => {
-    return BRANCHES.find(b => b.id === branchId)?.name || `Branch #${branchId}`;
+    return branches.find(b => b.id === Number(branchId))?.name || `Branch #${branchId}`;
   };
 
   const filteredUsers = users.filter(user => 
