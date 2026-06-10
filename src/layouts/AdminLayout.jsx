@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, Users, Settings, LogOut, Menu, Bell, Search, BarChart3 } from 'lucide-react';
+import { Link, useLocation, Outlet } from 'react-router-dom';
+import { LayoutDashboard, Users, LogOut, Menu, Bell, Search } from 'lucide-react';
 
 const AdminLayout = ({ onLogout }) => {
     const [sidebarOpen, setSidebarOpen] = useState(true);
+    const location = useLocation();
 
     const menuItems = [
-        { icon: <LayoutDashboard size={20} />, label: 'Dashboard', active: true },
-        { icon: <BarChart3 size={20} />, label: 'Analytics', active: false },
-        { icon: <Users size={20} />, label: 'Customers', active: false },
-        { icon: <Settings size={20} />, label: 'Settings', active: false },
+        { icon: <LayoutDashboard size={20} />, label: 'Dashboard', path: '/' },
+        { icon: <Users size={20} />, label: 'Users', path: '/users' },
     ];
 
     return (
@@ -18,28 +18,34 @@ const AdminLayout = ({ onLogout }) => {
             <aside className={`bg-slate-900 text-white transition-all duration-300 flex flex-col ${sidebarOpen ? 'w-64' : 'w-20'}`}>
                 <div className="h-16 flex items-center justify-between px-4 border-b border-slate-800">
                     {sidebarOpen && <span className="text-xl font-bold tracking-wider text-indigo-400">NEXUS.IO</span>}
-                    <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-1 hover:bg-slate-800 rounded mx-auto cursor-pointer">
+                    <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-1 hover:bg-slate-800 rounded mx-auto cursor-pointer border-0 bg-transparent text-white">
                         <Menu size={20} />
                     </button>
                 </div>
 
                 <nav className="flex-1 p-4 space-y-2">
-                    {menuItems.map((item, index) => (
-                        <button
-                            key={index}
-                            className={`w-full flex items-center gap-4 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer ${item.active ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                    {menuItems.map((item, index) => {
+                        const isActive = location.pathname === item.path || 
+                          (item.path !== '/' && location.pathname.startsWith(item.path));
+                        return (
+                            <Link
+                                key={index}
+                                to={item.path}
+                                className={`w-full flex items-center gap-4 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer text-decoration-none ${
+                                    isActive ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                                 }`}
-                        >
-                            {item.icon}
-                            {sidebarOpen && <span>{item.label}</span>}
-                        </button>
-                    ))}
+                            >
+                                {item.icon}
+                                {sidebarOpen && <span>{item.label}</span>}
+                            </Link>
+                        );
+                    })}
                 </nav>
 
                 <div className="p-4 border-t border-slate-800">
                     <button
                         onClick={onLogout}
-                        className="w-full flex items-center gap-4 px-3 py-2.5 rounded-lg text-sm font-medium text-red-400 hover:bg-red-950/30 transition-colors cursor-pointer"
+                        className="w-full flex items-center gap-4 px-3 py-2.5 rounded-lg text-sm font-medium text-red-400 hover:bg-red-950/30 transition-colors cursor-pointer border-0 bg-transparent text-left"
                     >
                         <LogOut size={20} />
                         {sidebarOpen && <span>Logout</span>}
@@ -64,7 +70,7 @@ const AdminLayout = ({ onLogout }) => {
                     </div>
 
                     <div className="flex items-center gap-4 ml-auto">
-                        <button className="p-1.5 text-slate-500 hover:bg-slate-100 rounded-full relative cursor-pointer">
+                        <button className="p-1.5 text-slate-500 hover:bg-slate-100 rounded-full relative cursor-pointer border-0 bg-transparent">
                             <Bell size={20} />
                             <span className="absolute top-1 right-1 w-2 h-2 bg-indigo-600 rounded-full"></span>
                         </button>
@@ -81,32 +87,9 @@ const AdminLayout = ({ onLogout }) => {
                     </div>
                 </header>
 
-                {/* METRICS VIEWPORTS */}
-                <main className="p-6 max-w-[1600px] w-full mx-auto space-y-6">
-                    <div>
-                        <h1 className="text-2xl font-bold text-slate-800">Operational Overview</h1>
-                        <p className="text-slate-500 text-sm">System metrics summary compiled in real-time.</p>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {[
-                            { title: 'Gross Operational Revenue', value: '$42,120', change: '+14.2%', color: 'text-emerald-600' },
-                            { title: 'Concurrent User Sessions', value: '3,812', change: '+22.4%', color: 'text-emerald-600' },
-                            { title: 'Active Server Threads', value: '94.8%', change: 'Stable', color: 'text-indigo-600' }
-                        ].map((card, i) => (
-                            <div key={i} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                                <p className="text-sm font-medium text-slate-500">{card.title}</p>
-                                <div className="flex items-baseline justify-between mt-2">
-                                    <span className="text-3xl font-bold text-slate-800">{card.value}</span>
-                                    <span className={`text-sm font-semibold ${card.color}`}>{card.change}</span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-
-                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm h-72 flex items-center justify-center text-slate-400 border-dashed border-2">
-                        Primary Content Node - [Mount custom data tables, charts, and configurations here]
-                    </div>
+                {/* METRICS VIEWPORTS / PAGES RENDER HERE */}
+                <main className="p-6 max-w-[1600px] w-full mx-auto">
+                    <Outlet />
                 </main>
             </div>
         </div>
