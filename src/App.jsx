@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/auth/Login';
 import AdminLayout from './layouts/AdminLayout';
 import Dashboard from './pages/Dashboard';
 import UserList from './pages/users/UserList';
 import UserForm from './pages/users/UserForm';
+import OrganizationList from './pages/organizations/OrganizationList';
+import OrganizationForm from './pages/organizations/OrganizationForm';
 import { UserProvider } from './context/UserContext';
+import { OrganizationProvider } from './context/OrganizationContext';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
 
@@ -37,19 +40,24 @@ function App() {
 
   return (
     <UserProvider>
-      <Routes>
-        {isAuthenticated ? (
-          <Route path="/" element={<AdminLayout onLogout={handleLogout} />}>
-            <Route index element={<Dashboard />} />
-            <Route path="users" element={<UserList />} />
-            <Route path="users/new" element={<UserForm />} />
-            <Route path="users/edit/:id" element={<UserForm />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Route>
-        ) : (
-          <Route path="*" element={<Login onLoginSuccess={() => setIsAuthenticated(true)} />} />
-        )}
-      </Routes>
+      <OrganizationProvider>
+        <Routes>
+          {isAuthenticated ? (
+            <Route path="/" element={<AdminLayout onLogout={handleLogout} />}>
+              <Route index element={<Dashboard />} />
+              <Route path="users" element={<UserList />} />
+              <Route path="users/new" element={<UserForm />} />
+              <Route path="users/edit/:id" element={<UserForm />} />
+              <Route path="organizations" element={<OrganizationList />} />
+              <Route path="organizations/new" element={<OrganizationForm />} />
+              <Route path="organizations/edit/:id" element={<OrganizationForm />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Route>
+          ) : (
+            <Route path="*" element={<Login onLoginSuccess={() => setIsAuthenticated(true)} />} />
+          )}
+        </Routes>
+      </OrganizationProvider>
     </UserProvider>
   );
 }
