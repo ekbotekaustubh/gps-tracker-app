@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link, useLocation, Outlet } from 'react-router-dom';
-import { LayoutDashboard, Users, LogOut, Menu, Bell, Search } from 'lucide-react';
+import { LayoutDashboard, Users, LogOut, Menu, Bell, Search, Building } from 'lucide-react';
 
 const AdminLayout = ({ onLogout }) => {
     const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -9,6 +9,7 @@ const AdminLayout = ({ onLogout }) => {
     const menuItems = [
         { icon: <LayoutDashboard size={20} />, label: 'Dashboard', path: '/' },
         { icon: <Users size={20} />, label: 'Users', path: '/users' },
+        { icon: <Building size={20} />, label: 'Organizations', path: '/organizations' },
     ];
 
     return (
