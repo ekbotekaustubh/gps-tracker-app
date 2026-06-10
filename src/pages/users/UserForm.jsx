@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { useUsers, ROLES, BRANCHES } from '../../context/UserContext';
-import { ArrowLeft, Save, ShieldAlert } from 'lucide-react';
+import { useUsers, ROLES } from '../../context/UserContext';
+import { useBranches } from '../../context/BranchContext';
+import { ArrowLeft, Save } from 'lucide-react';
 import { useCountries } from '../../hooks/useCountries';
 import { useStates } from '../../hooks/useStates';
 import { useCities } from '../../hooks/useCities';
@@ -10,6 +11,7 @@ const UserForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { users, addUser, updateUser } = useUsers();
+  const { branches } = useBranches();
   const isEditMode = !!id;
 
   const [formData, setFormData] = useState({
@@ -36,21 +38,23 @@ const UserForm = () => {
     if (isEditMode) {
       const user = users.find((u) => u.id === Number(id));
       if (user) {
-        setFormData({
-          name: user.name || '',
-          email: user.email || '',
-          mobile: user.mobile || '',
-          branch_id: user.branch_id ?? 0,
-          role_id: user.role_id ?? 4,
-          address_line_1: user.address_line_1 || '',
-          address_line_2: user.address_line_2 || '',
-          pincode: user.pincode || '',
-          country_id: user.country_id ?? 1,
-          state_id: user.state_id || '',
-          city_id: user.city_id || '',
-          username: user.username || '',
-          password: '', // blank by default for edit mode (keep current unless typed)
-          status: user.status ?? 1,
+        Promise.resolve().then(() => {
+          setFormData({
+            name: user.name || '',
+            email: user.email || '',
+            mobile: user.mobile || '',
+            branch_id: user.branch_id ?? 0,
+            role_id: user.role_id ?? 4,
+            address_line_1: user.address_line_1 || '',
+            address_line_2: user.address_line_2 || '',
+            pincode: user.pincode || '',
+            country_id: user.country_id ?? 1,
+            state_id: user.state_id || '',
+            city_id: user.city_id || '',
+            username: user.username || '',
+            password: '', // blank by default for edit mode (keep current unless typed)
+            status: user.status ?? 1,
+          });
         });
       } else {
         // User not found, redirect to list
@@ -219,7 +223,7 @@ const UserForm = () => {
                   onChange={handleChange}
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white"
                 >
-                  {BRANCHES.map((branch) => (
+                  {branches.map((branch) => (
                     <option key={branch.id} value={branch.id}>{branch.name}</option>
                   ))}
                 </select>

@@ -82,7 +82,9 @@ const OrganizationList = () => {
                           <Building size={18} />
                         </div>
                         <div>
-                          <div className="font-semibold text-slate-800">{org.name}</div>
+                          <Link to={`/organizations/view/${org.id}`} className="font-semibold text-indigo-600 hover:text-indigo-800 hover:underline text-decoration-none">
+                            {org.name}
+                          </Link>
                           <div className="text-xs text-slate-450">ID: #{org.id}</div>
                         </div>
                       </div>
