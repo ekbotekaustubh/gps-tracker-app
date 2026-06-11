@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { useUsers, ROLES } from '../../context/UserContext';
+import { useUsers } from '../../context/UserContext';
+import { useRoles } from '../../context/RoleContext';
 import { useBranches } from '../../context/BranchContext';
 import { ArrowLeft, Save } from 'lucide-react';
 import { useCountries } from '../../hooks/useCountries';
@@ -11,6 +12,7 @@ const UserForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { users, addUser, updateUser } = useUsers();
+  const { roles } = useRoles();
   const { branches } = useBranches();
   const isEditMode = !!id;
 
@@ -209,7 +211,7 @@ const UserForm = () => {
                   onChange={handleChange}
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white"
                 >
-                  {ROLES.map((role) => (
+                  {roles.map((role) => (
                     <option key={role.id} value={role.id}>{role.name}</option>
                   ))}
                 </select>
