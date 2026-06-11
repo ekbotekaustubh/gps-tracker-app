@@ -1,17 +1,19 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useUsers, ROLES } from '../../context/UserContext';
+import { useUsers } from '../../context/UserContext';
+import { useRoles } from '../../context/RoleContext';
 import { useBranches } from '../../context/BranchContext';
 import { Search, UserPlus, Edit, Trash2, Shield, MapPin, AlertTriangle } from 'lucide-react';
 
 const UserList = () => {
   const { users, deleteUser } = useUsers();
+  const { roles } = useRoles();
   const { branches } = useBranches();
   const [searchTerm, setSearchTerm] = useState('');
   const [userToDelete, setUserToDelete] = useState(null);
 
   const getRoleName = (roleId) => {
-    return ROLES.find(r => r.id === roleId)?.name || `Role #${roleId}`;
+    return roles.find(r => r.id === Number(roleId))?.name || `Role #${roleId}`;
   };
 
   const getBranchName = (branchId) => {
