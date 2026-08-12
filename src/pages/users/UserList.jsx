@@ -1,26 +1,15 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useUsers } from '../../context/UserContext';
-import { useRoles } from '../../context/RoleContext';
-import { useBranches } from '../../context/BranchContext';
 import { Search, UserPlus, Edit, Trash2, Shield, MapPin, AlertTriangle } from 'lucide-react';
 
 const UserList = () => {
-  const { users, deleteUser } = useUsers();
-  const { roles } = useRoles();
-  const { branches } = useBranches();
+  const { users, loading, error, deleteUser } = useUsers();
   const [searchTerm, setSearchTerm] = useState('');
   const [userToDelete, setUserToDelete] = useState(null);
+  const [deleteError, setDeleteError] = useState('');
 
-  const getRoleName = (roleId) => {
-    return roles.find(r => r.id === Number(roleId))?.name || `Role #${roleId}`;
-  };
-
-  const getBranchName = (branchId) => {
-    return branches.find(b => b.id === Number(branchId))?.name || `Branch #${branchId}`;
-  };
-
-  const filteredUsers = users.filter(user => 
+  const filteredUsers = users.filter(user =>
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -28,13 +17,18 @@ const UserList = () => {
   );
 
   const handleDeleteClick = (id, name) => {
+    setDeleteError('');
     setUserToDelete({ id, name });
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (userToDelete) {
-      deleteUser(userToDelete.id);
-      setUserToDelete(null);
+      try {
+        await deleteUser(userToDelete.id);
+        setUserToDelete(null);
+      } catch (err) {
+        setDeleteError(err.message || 'Failed to delete user.');
+      }
     }
   };
 
@@ -73,6 +67,12 @@ const UserList = () => {
           Showing {filteredUsers.length} of {users.length} users
         </div>
       </div>
+
+      {error && (
+        <div className="p-3 bg-red-50 text-red-650 text-sm rounded-lg border border-red-100">
+          Failed to load users: {error}
+        </div>
+      )}
 
       {/* Users Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
@@ -113,14 +113,14 @@ const UserList = () => {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-1.5 text-slate-800 font-medium">
                         <Shield size={14} className="text-indigo-500" />
-                        <span>{getRoleName(user.role_id)}</span>
+                        <span>{user.role_name || `Role #${user.role_id}`}</span>
                       </div>
                     </td>
                     {/* Branch */}
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-1.5 text-slate-800">
                         <MapPin size={14} className="text-slate-400" />
-                        <span>{getBranchName(user.branch_id)}</span>
+                        <span>{user.branch_name || `Branch #${user.branch_id}`}</span>
                       </div>
                     </td>
                     {/* Status */}
@@ -158,7 +158,7 @@ const UserList = () => {
               ) : (
                 <tr>
                   <td colSpan="6" className="px-6 py-12 text-center text-slate-400">
-                    No users found matching your search.
+                    {loading ? 'Loading users...' : 'No users found matching your search.'}
                   </td>
                 </tr>
               )}
@@ -187,6 +187,7 @@ const UserList = () => {
                 <p className="text-sm text-slate-500">
                   Are you sure you want to delete user <strong className="text-slate-800 font-semibold">"{userToDelete.name}"</strong>? This action cannot be undone and will remove all associated database records.
                 </p>
+                {deleteError && <p className="text-xs text-red-650 font-semibold">{deleteError}</p>}
               </div>
             </div>
             

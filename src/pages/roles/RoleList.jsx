@@ -4,15 +4,15 @@ import { useRoles } from '../../context/RoleContext';
 import { Search, Plus, Edit, Trash2, Shield, Lock, AlertTriangle, ShieldCheck } from 'lucide-react';
 
 const RoleList = () => {
-  const { roles, deleteRole } = useRoles();
+  const { roles, loading, error, deleteRole } = useRoles();
   const [searchTerm, setSearchTerm] = useState('');
   const [roleToDelete, setRoleToDelete] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
 
   // Filter roles
-  const filteredRoles = roles.filter(role => 
+  const filteredRoles = roles.filter(role =>
     role.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    role.description.toLowerCase().includes(searchTerm.toLowerCase())
+    (role.description || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleDeleteClick = (role) => {
@@ -20,13 +20,13 @@ const RoleList = () => {
     setErrorMsg('');
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (roleToDelete) {
-      const success = deleteRole(roleToDelete.id);
-      if (success) {
+      try {
+        await deleteRole(roleToDelete.id);
         setRoleToDelete(null);
-      } else {
-        setErrorMsg('Failed to delete role. System-defined roles cannot be deleted.');
+      } catch (err) {
+        setErrorMsg(err.message || 'Failed to delete role.');
       }
     }
   };
@@ -69,6 +69,12 @@ const RoleList = () => {
           Showing {filteredRoles.length} of {roles.length} roles
         </div>
       </div>
+
+      {error && (
+        <div className="p-3 bg-red-50 text-red-650 text-sm rounded-lg border border-red-100">
+          Failed to load roles: {error}
+        </div>
+      )}
 
       {/* Roles Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
@@ -166,7 +172,7 @@ const RoleList = () => {
               ) : (
                 <tr>
                   <td colSpan="5" className="px-6 py-12 text-center text-slate-400">
-                    No roles found matching your search.
+                    {loading ? 'Loading roles...' : 'No roles found matching your search.'}
                   </td>
                 </tr>
               )}

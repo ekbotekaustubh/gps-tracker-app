@@ -4,13 +4,13 @@ import { useRoles } from '../../context/RoleContext';
 import { Search, Plus, Edit, Trash2, Key, Lock, AlertTriangle, ShieldCheck } from 'lucide-react';
 
 const PermissionList = () => {
-  const { permissions, deletePermission } = useRoles();
+  const { permissions, loading, error, deletePermission } = useRoles();
   const [searchTerm, setSearchTerm] = useState('');
   const [permissionToDelete, setPermissionToDelete] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
 
   // Filter permissions
-  const filteredPermissions = permissions.filter(perm => 
+  const filteredPermissions = permissions.filter(perm =>
     perm.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     perm.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
     perm.module.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -22,13 +22,13 @@ const PermissionList = () => {
     setErrorMsg('');
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (permissionToDelete) {
-      const success = deletePermission(permissionToDelete.id);
-      if (success) {
+      try {
+        await deletePermission(permissionToDelete.id);
         setPermissionToDelete(null);
-      } else {
-        setErrorMsg('Failed to delete permission. System permissions cannot be deleted.');
+      } catch (err) {
+        setErrorMsg(err.message || 'Failed to delete permission.');
       }
     }
   };
@@ -71,6 +71,12 @@ const PermissionList = () => {
           Showing {filteredPermissions.length} of {permissions.length} permissions
         </div>
       </div>
+
+      {error && (
+        <div className="p-3 bg-red-50 text-red-650 text-sm rounded-lg border border-red-100">
+          Failed to load permissions: {error}
+        </div>
+      )}
 
       {/* Permissions Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
@@ -156,7 +162,7 @@ const PermissionList = () => {
               ) : (
                 <tr>
                   <td colSpan="6" className="px-6 py-12 text-center text-slate-400">
-                    No permissions found matching your search.
+                    {loading ? 'Loading permissions...' : 'No permissions found matching your search.'}
                   </td>
                 </tr>
               )}

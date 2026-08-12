@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { apiClient } from '../services/apiClient';
 
 /**
  * Custom hook to fetch countries from the API
@@ -13,11 +14,7 @@ export const useCountries = () => {
     const fetchCountries = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/v1/countries`);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch countries: ${response.statusText}`);
-        }
-        const data = await response.json();
+        const data = await apiClient.get('/countries');
         setCountries(data.data || []);
         setError(null);
       } catch (err) {
@@ -57,13 +54,7 @@ export const useCountryById = (countryId) => {
     const fetchCountry = async () => {
       try {
         setLoading(true);
-        const response = await fetch(
-          `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/v1/countries/${countryId}`
-        );
-        if (!response.ok) {
-          throw new Error(`Failed to fetch country: ${response.statusText}`);
-        }
-        const data = await response.json();
+        const data = await apiClient.get(`/countries/${countryId}`);
         setCountry(data.data || null);
         setError(null);
       } catch (err) {

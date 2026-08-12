@@ -14,7 +14,7 @@ const BranchForm = () => {
   const isEditMode = !!id;
 
   const { organizations } = useOrganizations();
-  const { branches, addBranch, updateBranch } = useBranches();
+  const { branches, loading: branchesLoading, addBranch, updateBranch } = useBranches();
 
   // Get orgId query parameter for new branch pre-selection
   const queryParams = new URLSearchParams(location.search);
@@ -36,6 +36,8 @@ const BranchForm = () => {
   });
 
   const [errors, setErrors] = useState({});
+  const [submitError, setSubmitError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   // Dynamic geography hooks
   const { countries, loading: loadingCountries } = useCountries();
@@ -75,11 +77,11 @@ const BranchForm = () => {
             status: branch.status ?? 1,
           });
         });
-      } else {
+      } else if (!branchesLoading) {
         navigate('/organizations');
       }
     }
-  }, [id, isEditMode, branches, navigate]);
+  }, [id, isEditMode, branches, branchesLoading, navigate]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -119,24 +121,35 @@ const BranchForm = () => {
     if (!formData.address_line_1.trim()) newErrors.address_line_1 = 'Address Line 1 is required';
     if (!formData.country_id) newErrors.country_id = 'Country is required';
     if (!formData.state_id) newErrors.state_id = 'State is required';
+    if (!formData.city_id) newErrors.city_id = 'City is required';
     if (!formData.pincode.trim()) newErrors.pincode = 'Pincode is required';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
 
-    if (isEditMode) {
-      updateBranch(id, formData);
-    } else {
-      addBranch(formData);
+    const selectedCity = cities.find((c) => c.id === Number(formData.city_id));
+    const payload = { ...formData, city: selectedCity?.name || '' };
+
+    setSubmitError('');
+    setSubmitting(true);
+    try {
+      if (isEditMode) {
+        await updateBranch(id, payload);
+      } else {
+        await addBranch(payload);
+      }
+      // Redirect back to organization details page
+      navigate(`/organizations/view/${formData.org_id}`);
+    } catch (err) {
+      setSubmitError(err.message || 'Failed to save branch.');
+    } finally {
+      setSubmitting(false);
     }
-    
-    // Redirect back to organization details page
-    navigate(`/organizations/view/${formData.org_id}`);
   };
 
   // Determine cancel link path
@@ -318,13 +331,15 @@ const BranchForm = () => {
 
             {/* City Dropdown */}
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1">City (Optional)</label>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">City *</label>
               <select
                 name="city_id"
                 value={formData.city_id}
                 onChange={handleChange}
                 disabled={!formData.state_id}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white disabled:bg-slate-100 disabled:text-slate-450"
+                className={`w-full px-3 py-2 bg-slate-50 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white disabled:bg-slate-100 disabled:text-slate-450 ${
+                  errors.city_id ? 'border-red-300 ring-2 ring-red-500/20' : 'border-slate-200'
+                }`}
               >
                 <option value="">Select City</option>
                 {cities.map((c) => (
@@ -334,6 +349,7 @@ const BranchForm = () => {
                 ))}
               </select>
               {loadingCities && <p className="mt-1 text-xs text-slate-400">Loading cities...</p>}
+              {errors.city_id && <p className="mt-1 text-xs text-red-650">{errors.city_id}</p>}
             </div>
 
             {/* Pincode */}
@@ -390,6 +406,10 @@ const BranchForm = () => {
           </div>
         </div>
 
+        {submitError && (
+          <p className="text-sm text-red-650 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{submitError}</p>
+        )}
+
         {/* Action buttons */}
         <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
           <Link
@@ -400,10 +420,11 @@ const BranchForm = () => {
           </Link>
           <button
             type="submit"
-            className="inline-flex items-center justify-center gap-2 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg shadow-sm transition-colors border-0 cursor-pointer"
+            disabled={submitting}
+            className="inline-flex items-center justify-center gap-2 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg shadow-sm transition-colors border-0 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
           >
             <Save size={16} />
-            Save Branch Record
+            {submitting ? 'Saving...' : 'Save Branch Record'}
           </button>
         </div>
       </form>

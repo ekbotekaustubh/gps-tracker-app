@@ -17,6 +17,8 @@ const PermissionForm = () => {
   });
 
   const [errors, setErrors] = useState({});
+  const [submitError, setSubmitError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   // Get unique modules currently defined in system permissions to suggest in datalist
   const existingModules = Array.from(new Set(permissions.map(p => p.module)));
@@ -86,7 +88,7 @@ const PermissionForm = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
 
@@ -97,12 +99,20 @@ const PermissionForm = () => {
       description: formData.description.trim(),
     };
 
-    if (isEditMode) {
-      updatePermission(id, data);
-    } else {
-      addPermission(data);
+    setSubmitError('');
+    setSubmitting(true);
+    try {
+      if (isEditMode) {
+        await updatePermission(id, data);
+      } else {
+        await addPermission(data);
+      }
+      navigate('/permissions');
+    } catch (err) {
+      setSubmitError(err.message || 'Failed to save permission.');
+    } finally {
+      setSubmitting(false);
     }
-    navigate('/permissions');
   };
 
   return (
@@ -185,7 +195,7 @@ const PermissionForm = () => {
               ))}
             </datalist>
             <p className="mt-1 text-xs text-slate-400">
-              Categories permissions under a common group in the role permission checklist.
+              Categories permissions under a common group in the role permission checklist. Note: the group actually shown is derived from the code prefix (e.g. `billing.*` groups under "Billing").
             </p>
             {errors.module && <p className="mt-1 text-xs text-red-650">{errors.module}</p>}
           </div>
@@ -201,6 +211,10 @@ const PermissionForm = () => {
               className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white"
             />
           </div>
+
+          {submitError && (
+            <p className="text-sm text-red-650 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{submitError}</p>
+          )}
         </div>
 
         {/* Action Buttons */}
@@ -213,10 +227,11 @@ const PermissionForm = () => {
           </Link>
           <button
             type="submit"
-            className="inline-flex items-center justify-center gap-2 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg shadow-sm transition-colors border-0 cursor-pointer"
+            disabled={submitting}
+            className="inline-flex items-center justify-center gap-2 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg shadow-sm transition-colors border-0 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
           >
             <Save size={16} />
-            Save Permission
+            {submitting ? 'Saving...' : 'Save Permission'}
           </button>
         </div>
       </form>

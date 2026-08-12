@@ -17,6 +17,8 @@ const RoleForm = () => {
 
   const [errors, setErrors] = useState({});
   const [isSystemRole, setIsSystemRole] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   // Group permissions by module
   const permissionsByModule = permissions.reduce((acc, perm) => {
@@ -117,7 +119,7 @@ const RoleForm = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
 
@@ -127,12 +129,20 @@ const RoleForm = () => {
       permissions: formData.permissions,
     };
 
-    if (isEditMode) {
-      updateRole(id, data);
-    } else {
-      addRole(data);
+    setSubmitError('');
+    setSubmitting(true);
+    try {
+      if (isEditMode) {
+        await updateRole(id, data);
+      } else {
+        await addRole(data);
+      }
+      navigate('/roles');
+    } catch (err) {
+      setSubmitError(err.message || 'Failed to save role.');
+    } finally {
+      setSubmitting(false);
     }
-    navigate('/roles');
   };
 
   // Check if all permissions in the system are selected
@@ -291,6 +301,10 @@ const RoleForm = () => {
           </div>
         </div>
 
+        {submitError && (
+          <p className="text-sm text-red-650 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{submitError}</p>
+        )}
+
         {/* Action buttons */}
         <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
           <Link
@@ -301,10 +315,11 @@ const RoleForm = () => {
           </Link>
           <button
             type="submit"
-            className="inline-flex items-center justify-center gap-2 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg shadow-sm transition-colors border-0 cursor-pointer"
+            disabled={submitting}
+            className="inline-flex items-center justify-center gap-2 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg shadow-sm transition-colors border-0 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
           >
             <Save size={16} />
-            Save Role Configuration
+            {submitting ? 'Saving...' : 'Save Role Configuration'}
           </button>
         </div>
       </form>
