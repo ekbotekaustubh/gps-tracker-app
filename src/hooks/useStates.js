@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { apiClient } from '../services/apiClient';
 
 /**
  * Custom hook to fetch states for a specific country from the API
@@ -22,13 +23,7 @@ export const useStates = (countryId) => {
     const fetchStates = async () => {
       try {
         setLoading(true);
-        const response = await fetch(
-          `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/v1/states/${countryId}`
-        );
-        if (!response.ok) {
-          throw new Error(`Failed to fetch states: ${response.statusText}`);
-        }
-        const data = await response.json();
+        const data = await apiClient.get(`/states/${countryId}`);
         setStates(data.data || []);
         setError(null);
       } catch (err) {

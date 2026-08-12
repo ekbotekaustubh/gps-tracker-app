@@ -2,16 +2,22 @@ import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useOrganizations } from '../../context/OrganizationContext';
 import { useBranches } from '../../context/BranchContext';
-import { STATES, CITIES } from '../../context/UserContext';
 import { ArrowLeft, Edit, Trash2, Phone, Plus, AlertTriangle } from 'lucide-react';
 
 const OrganizationDetail = () => {
   const { id } = useParams();
-  const { organizations } = useOrganizations();
+  const { organizations, loading: orgsLoading } = useOrganizations();
   const { branches, deleteBranch } = useBranches();
   const [branchToDelete, setBranchToDelete] = useState(null);
+  const [deleteError, setDeleteError] = useState('');
 
   const org = organizations.find((o) => o.id === Number(id));
+
+  if (!org && orgsLoading) {
+    return (
+      <div className="text-center text-slate-400 mt-12 text-sm">Loading organization...</div>
+    );
+  }
 
   if (!org) {
     return (
@@ -32,22 +38,19 @@ const OrganizationDetail = () => {
   // Exclude system branch (id: 0) if it is shown
   const orgBranches = branches.filter((b) => b.org_id === org.id && b.id !== 0);
 
-  const getStateName = (stateId) => {
-    return STATES.find((s) => s.id === Number(stateId))?.name || `State #${stateId}`;
-  };
-
-  const getCityName = (cityId) => {
-    return CITIES.find((c) => c.id === Number(cityId))?.name || '';
-  };
-
   const handleDeleteClick = (branchId, branchName) => {
+    setDeleteError('');
     setBranchToDelete({ id: branchId, name: branchName });
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (branchToDelete) {
-      deleteBranch(branchToDelete.id);
-      setBranchToDelete(null);
+      try {
+        await deleteBranch(branchToDelete.id);
+        setBranchToDelete(null);
+      } catch (err) {
+        setDeleteError(err.message || 'Failed to delete branch.');
+      }
     }
   };
 
@@ -174,7 +177,7 @@ const OrganizationDetail = () => {
                           {branch.address_line_2 && `, ${branch.address_line_2}`}
                         </div>
                         <div className="text-slate-450 mt-0.5">
-                          {getCityName(branch.city_id) || branch.city}, {getStateName(branch.state_id)} - {branch.pincode}
+                          {branch.city_name || branch.city}, {branch.state_name} - {branch.pincode}
                         </div>
                       </td>
 
@@ -241,6 +244,7 @@ const OrganizationDetail = () => {
                 <p className="text-sm text-slate-500">
                   Are you sure you want to delete branch <strong className="text-slate-800 font-semibold">"{branchToDelete.name}"</strong>? This action cannot be undone and will delete all dependent data.
                 </p>
+                {deleteError && <p className="text-xs text-red-650 font-semibold">{deleteError}</p>}
               </div>
             </div>
 

@@ -15,6 +15,8 @@ const OrganizationForm = () => {
   });
 
   const [errors, setErrors] = useState({});
+  const [submitError, setSubmitError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   // Populate form in edit mode
   useEffect(() => {
@@ -27,6 +29,8 @@ const OrganizationForm = () => {
             status: org.status ?? 1,
           });
         });
+      } else if (!organizations.length) {
+        // organizations not loaded yet, wait for next render
       } else {
         // Organization not found, redirect to list
         navigate('/organizations');
@@ -38,10 +42,13 @@ const OrganizationForm = () => {
     const { name, value, type, checked } = e.target;
     let newValue = type === 'checkbox' ? (checked ? 1 : 0) : value;
 
-    setFormData((prev) => ({
-      ...prev,
-      [name]: newValue,
-    }));
+    setFormData((prev) => {
+      const updated = { ...prev, [name]: newValue };
+      if (name === 'country_id') {
+        updated.state_id = '';
+      }
+      return updated;
+    });
 
     // Clear error
     if (errors[name]) {
@@ -58,16 +65,24 @@ const OrganizationForm = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
 
-    if (isEditMode) {
-      updateOrganization(id, formData);
-    } else {
-      addOrganization(formData);
+    setSubmitError('');
+    setSubmitting(true);
+    try {
+      if (isEditMode) {
+        await updateOrganization(id, formData);
+      } else {
+        await addOrganization(formData);
+      }
+      navigate('/organizations');
+    } catch (err) {
+      setSubmitError(err.message || 'Failed to save organization.');
+    } finally {
+      setSubmitting(false);
     }
-    navigate('/organizations');
   };
 
   return (
@@ -104,12 +119,13 @@ const OrganizationForm = () => {
               value={formData.name}
               onChange={handleChange}
               placeholder="e.g. Acme Corp"
-              className={`w-full px-3 py-2 bg-slate-50 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white ${
-                errors.name ? 'border-red-300 ring-2 ring-red-500/20' : 'border-slate-200'
-              }`}
+              className={`w-full px-3 py-2 bg-slate-50 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white ${errors.name ? 'border-red-300 ring-2 ring-red-500/20' : 'border-slate-200'
+                }`}
             />
             {errors.name && <p className="mt-1 text-xs text-red-650">{errors.name}</p>}
           </div>
+
+
 
           <div className="pt-2">
             <label className="flex items-center gap-3 cursor-pointer">
@@ -126,6 +142,10 @@ const OrganizationForm = () => {
               </div>
             </label>
           </div>
+
+          {submitError && (
+            <p className="text-sm text-red-650 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{submitError}</p>
+          )}
         </div>
 
         {/* Action buttons */}
@@ -138,10 +158,11 @@ const OrganizationForm = () => {
           </Link>
           <button
             type="submit"
-            className="inline-flex items-center justify-center gap-2 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg shadow-sm transition-colors border-0 cursor-pointer"
+            disabled={submitting}
+            className="inline-flex items-center justify-center gap-2 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg shadow-sm transition-colors border-0 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
           >
             <Save size={16} />
-            Save Organization Record
+            {submitting ? 'Saving...' : 'Save Organization Record'}
           </button>
         </div>
       </form>

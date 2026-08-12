@@ -4,22 +4,28 @@ import { useOrganizations } from '../../context/OrganizationContext';
 import { Search, Plus, Edit, Trash2, Building, AlertTriangle } from 'lucide-react';
 
 const OrganizationList = () => {
-  const { organizations, deleteOrganization } = useOrganizations();
+  const { organizations, loading, error, deleteOrganization } = useOrganizations();
   const [searchTerm, setSearchTerm] = useState('');
   const [orgToDelete, setOrgToDelete] = useState(null);
+  const [deleteError, setDeleteError] = useState('');
 
   const filteredOrgs = organizations.filter(org =>
     org.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleDeleteClick = (id, name) => {
+    setDeleteError('');
     setOrgToDelete({ id, name });
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (orgToDelete) {
-      deleteOrganization(orgToDelete.id);
-      setOrgToDelete(null);
+      try {
+        await deleteOrganization(orgToDelete.id);
+        setOrgToDelete(null);
+      } catch (err) {
+        setDeleteError(err.message || 'Failed to delete organization.');
+      }
     }
   };
 
@@ -58,6 +64,12 @@ const OrganizationList = () => {
           Showing {filteredOrgs.length} of {organizations.length} organizations
         </div>
       </div>
+
+      {error && (
+        <div className="p-3 bg-red-50 text-red-650 text-sm rounded-lg border border-red-100">
+          Failed to load organizations: {error}
+        </div>
+      )}
 
       {/* Organizations Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
@@ -128,7 +140,7 @@ const OrganizationList = () => {
               ) : (
                 <tr>
                   <td colSpan="4" className="px-6 py-12 text-center text-slate-400">
-                    No organizations found matching your search.
+                    {loading ? 'Loading organizations...' : 'No organizations found matching your search.'}
                   </td>
                 </tr>
               )}
@@ -157,6 +169,7 @@ const OrganizationList = () => {
                 <p className="text-sm text-slate-500">
                   Are you sure you want to delete organization <strong className="text-slate-800 font-semibold">"{orgToDelete.name}"</strong>? This action cannot be undone and will remove all associated database records.
                 </p>
+                {deleteError && <p className="text-xs text-red-650 font-semibold">{deleteError}</p>}
               </div>
             </div>
             
